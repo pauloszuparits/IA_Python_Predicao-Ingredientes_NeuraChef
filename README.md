@@ -1,138 +1,138 @@
 # **NeuraChef**
 
-Essa é uma rede neural de previsão de gasto de ingredientes por dia em um restaurante utilizando as seguintes **variaveis**
-* Estação do ano
-* Clima
-* Dia da semana
-* Dia do mês
-* Valor do ingrediente
-* Consumo nas receitas
+**NeuraChef** é uma rede neural projetada para prever o consumo diário de ingredientes em um restaurante com base em variáveis como:  
+- **Estação do ano**  
+- **Clima**  
+- **Dia da semana**  
+- **Dia do mês**  
+- **Valor do ingrediente**  
+- **Consumo nas receitas**  
 
 ---
 
 ## **Classe Ingredientes**
 
-A classe Ingredientes herda da classe Dataset, uma classe do pytorch para criação de datasets.
+A classe `Ingredientes` herda de `Dataset`, uma classe do PyTorch para criação e manipulação de datasets.  
+Ela implementa os seguintes métodos:  
 
-Temos 3 métodos nessa classe, sendo o método __ init __ o construtor, que recebe um caminho para o csv que será criado o data set e com a classe do pandas lê o arquivo no caminho especificado.
+1. **`__init__`**:  
+   - Construtor que recebe o caminho para um arquivo CSV.  
+   - Utiliza o pandas para carregar e processar os dados.  
 
-O método __ getitem __ que separa o dataset em sample e label que seria o dado e o rótulo respectivamente, neste caso, os dados estão da coluna 1 até a coluna 9 do csv, enquanto o rótulo, está na ultima coluna do csv.
+2. **`__getitem__`**:  
+   - Separa o dataset em amostras e rótulos.  
+   - As colunas de 1 a 9 são os dados de entrada, enquanto a última coluna é o rótulo.  
 
-E por ultimo temos o método __ len __ que retorna o tamanho do conjunto de dados.
+3. **`__len__`**:  
+   - Retorna o tamanho do conjunto de dados.  
 
-## **Classe MLP ( Multilayer Perceptron )**
+---
 
-A classe MLP herda da classe nn.Module que é uma classe do pytorch que auxilia na criação das redes neruais.
+## **Classe MLP (Multilayer Perceptron)**
 
-Temos 2 métodos nessa classe, sendo o método __ init __ o construtor que recebe o input_size (tamanho da entrada), o hidden_size (tamanho da camada escondida) e o out_size(tamanho da saida). Neste método é definida a arquitetura que será utilizada na rede neural. Primeiramente, é utilizado o nn.Sequential pra criar uma sequencia de camadas, sendo essas camadas:
+A classe `MLP` herda de `nn.Module` do PyTorch e define a arquitetura da rede neural.  
 
-### **Extração de caracteristicas**
+### **Métodos**  
+1. **`__init__`**:  
+   - Construtor que recebe:  
+     - `input_size`: Tamanho da entrada.  
+     - `hidden_size`: Tamanho da camada oculta.  
+     - `output_size`: Tamanho da saída.  
+   - Define a arquitetura utilizando `nn.Sequential` com as seguintes camadas:  
 
-**Camada de entrada**
+     **Extração de características**  
+     - Camada de entrada:  
+       - `nn.Linear`: Camada linear que conecta a entrada à camada oculta.  
+       - `nn.ReLU`: Função de ativação que permite aprendizado não linear.  
+     - Camada oculta:  
+       - `nn.Linear`: Camada linear conectando a entrada e saída da camada oculta.  
+       - `nn.ReLU`: Função de ativação.  
 
-*   nn.Linear -> uma camada linear que recebe a entrada e passa para a camada escondida
-*   nn.ReLU -> uma função de ativação que faz com que a rede possa prever de forma não linear
+     **Classificação da rede**  
+     - Camada de saída:  
+       - `nn.Linear`: Camada linear conectando a camada oculta à saída.  
+       - `nn.ReLU`: Função de ativação.  
 
-**Camada escondida**
+2. **`forward`**:  
+   - Define como os dados fluem pela rede, passando pelas camadas ocultas e de saída para gerar as previsões.  
 
-*   nn.Linear -> uma camada linear que recebe o tamanho da camada escondida e tem uma saida de mesmo tamanho para a camada de saída
-*   nn.ReLU -> Outra função de ativação ReLU com a mesma funcionalidade
+---
 
-### **Classificação da rede**
+## **Funções de treinamento, validação e precisão**
 
-**Camada de saída**
+### **`train()`**  
+Treina a rede utilizando um conjunto de dados.  
+1. Coloca a rede em modo de treinamento (`net.train()`).  
+2. Executa o **forward** (previsão), calcula o erro (loss) e realiza o **backpropagation** para ajustar os parâmetros.  
 
-*   nn.Linear -> uma camada linear que recebe o tamanho da camada escondida e tem uma saida de 1 que é o tamanho da saida
+### **`validate()`**  
+Valida o desempenho da rede.  
+1. Coloca a rede em modo de validação (`net.eval()`).  
+2. Realiza o **forward** para calcular o erro sem ajustar os parâmetros.  
 
-*  nn.ReLU -> Outra função de ativação ReLU
+### **`calculate_precision()`**  
+Calcula o coeficiente de determinação (R²) para medir a precisão do modelo.  
+1. Coloca a rede em modo de validação.  
+2. Utiliza o `r2_score` do scikit-learn para calcular o R².  
 
-O método forward ele serve para indicar como os dados devem fluir pela rede, neste caso, os dados de entrada passam pela camada escondida e são classificados, gerando assim um resultado na camada de saída.
+---
 
-# **Funções de treinamento, validação e medição de precisão**
+## **Hiperparâmetros e leitura do dataset**
 
+Os hiperparâmetros definidos são:  
+- **`epoch_num`**: Número de épocas.  
+- **`lr`**: Taxa de aprendizado.  
+- **`weight_decay`**: Regularização para evitar overfitting.  
+- **`num_workers`**: Número de threads do `DataLoader`.  
+- **`batch_size`**: Número de amostras por iteração.  
 
-### Função train()
+O código verifica a disponibilidade de GPU para treinamento e solicita o upload do dataset, exibindo uma amostra dos dados.  
 
-A função train recebe um train_loader, com os dados de treino, uma rede e a época.
-Essa função tem como objetivo treinar a rede.
-Primeiramente a função coloca a rede em modo de treinamento através do net.train().
-É utilizado um loop dentro da funcao que itera sobre o train_loader, dentro deste loop é feito o **forward**, que é basicamente usar a rede para prever um dado a partir de uma entrada, após essa predição é utilizado uma função de perda, que utiliza a predição + o rotulo para calcular o loss, e por fim essa loss é adicionada a uma lista com a loss da epoch.
-Após o forward, temos o **backpropagation**, que utiliza de calculos de derivada para calcular os parametros mais adequados ao modelo que estamos tentando prever.
-Por fim temos a atualizacao dos parametros calculados anteriormente utilizando o otimizador.
+---
 
+## **Instanciação da rede e criação dos DataLoaders**
 
-### Função validate()
+1. Os dados são embaralhados e convertidos em CSV para uso pela classe `Ingredientes`.  
+2. A rede é configurada com os tamanhos de entrada, camada oculta e saída.  
+3. São definidos:  
+   - **Critério**: `L1Loss`.  
+   - **Otimizador**: `Adam`.  
 
-A função validate recebe um test_loader com dados de teste do modelo, uma rede e uma época.
-Essa função tem como objetivo validar o desempenho da rede e do treinamento do modelo.
-Primeiramente a função coloca a rede em modo de validação a partir do net.eval().
-É utilizado um loop dentro da função que itera sobre o test_loader e assim como a função train() é realizado o **forward** que utiliza a rede para prever o dado e calcula o loss a partir de uma função. Na funcao validation, diferente da função train, não temos o backpropagation.
+---
 
+## **Fase de treinamento**
 
-### Função calculate_precision()
+Nesta etapa, o treinamento é executado em um laço que:  
+1. Itera sobre o número de épocas.  
+2. Chama as funções de treino, validação e precisão.  
+3. Armazena os resultados para visualização.  
 
-A função calculate_precision recebe um test_loader com dados de teste do modelo, uma rede.
-O objetivo desta função é calcular a precisão do modelo através do calculo do coeficiente de determinação (R²), esse coeficiente varia de 0 a 1 podendo ter resultados negativos caso a rede esteja com resultados muito distantes do que foi testado.
-Assim como na função validate, a rede é colocada em modo de validação. Após isso, é feito um iterando em test_loader e armazenando os dados de predição e teste.
-Após isso, é utilizado a função r2_score do scikit-learn para calcular o coeficiente R2.
+---
 
+## **Visualização dos resultados**
 
-# **Hiperparâmetros, e leitura do dataset**
+### **Gráfico de Convergência**  
+Compara a loss ao longo das épocas utilizando o `matplotlib`.  
 
-Hiperparametros são parametros definidos para treinar o modelo, sendo eles
+![Gráfico de Convergência](https://github.com/user-attachments/assets/95469803-72ac-47dd-b77e-afb5f5edfe15)  
 
+### **Gráfico Precisão R² x Época**  
+Mostra a precisão R² ao longo das épocas.  
 
-*   **epoch_num** -> Número de vezes que o conjunto de função de treinamento irá ocorrer
-*   **lr** -> Taxa de aprendizado é a taxa da qual o modelo irá ajustar os parametros no treinamento
+![Gráfico de Precisão](https://github.com/user-attachments/assets/6a7df4dd-b33d-4eeb-b802-a2455aa83473)  
 
-*   **weight_decay** -> Regularização do modelo, ou Penalidade L2, evita que os pesos do modelo sejam ajustados com valores muito altos
+---
 
-*   **num_workers** -> Numero de threads do DataLoader
+## **Testes e predições**
 
-*   **batch_size** -> Quantidade de exemplos, ou no caso linhas, que serão utilizadas em cada iteração do treinamento
+Após o upload do arquivo de testes:  
+1. Os dados são embaralhados.  
+2. É gerado um gráfico de dispersão por ingrediente.  
+3. Uma tabela exibe os valores reais x preditos.  
 
+![Gráfico de Dispersão](https://github.com/user-attachments/assets/df5aaa94-6766-4e5a-874b-bda08e05baba)  
 
-Após a definição dos hiperparametros, o código verifica se a GPU está disponível para uso, será importante usar a GPU para o treinamento do modelo.
-E por fim, o código solicita o upload do DataSet e mostra uma pequena amostra do arquivo que foi feito o upload.
+---
 
-
-# **Instanciação da rede e criação dos DataLoaders**
-
-Primeiramente, pra criação dos DataLoaders, é feito um embaralhamento dos dados, para que a rede seja treinada da forma mais adequada possível. Depois do embaralhamento dos dados, esses dados embaralhados são transformados em um CSV que será lido pela classe Ingrediente.
-
-Assim, é definido o tamanho da entrada, o tamanho da camada escondida, e o tamanho da saída, e é criada a rede.
-
-Após isso, é definido o **critério**, que no caso é o **L1Loss**, e o **otimizador**, que no caso é o **Adam**.
-
-
-# Fase de treinamentos
-
-Nesta parte do código se inicia os treinamentos, onde há um laço que irá iterar sobre o numero de épocas, chamando as funções de treino, validacao e calculo de precisão.
-Os retornos são armazenados para composição de gráficos
-
-
-# Gráfico de convergência
-
-Foi utilizada a classe **matplotlib** para fazer um gráfico de convergencia, que compara a loss ao longo das épocas.
-
-
-![image](https://github.com/user-attachments/assets/95469803-72ac-47dd-b77e-afb5f5edfe15)
-
-# Gráfico Precisão R² x Epoch
-
-Aqui temos um gráfico parecido com o anterior, porém, é mostrado a precisão R² ao longo das épocas.
-
-![image](https://github.com/user-attachments/assets/6a7df4dd-b33d-4eeb-b802-a2455aa83473)
-
-
-# Testes e predições
-
-Após o upload do arquivo de testes, os dados são embaralhados e é feito um gráfico de disperção separado por ingrediente e uma tabela com o valor real x valor predito.
-
-![image](https://github.com/user-attachments/assets/df5aaa94-6766-4e5a-874b-bda08e05baba)
-
-
-# Documentação completa disponível em:
-https://drive.google.com/file/d/1xMOqGyVcU8jc0zITuC3ey1dykuBtBIYG/view?usp=sharing
-
-
+## **Documentação Completa**  
+Para mais detalhes, acesse a [documentação completa](https://drive.google.com/file/d/1xMOqGyVcU8jc0zITuC3ey1dykuBtBIYG/view?usp=sharing).  
